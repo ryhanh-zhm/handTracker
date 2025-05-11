@@ -8,7 +8,7 @@ drawCanvas.height = window.innerHeight;
 const video = document.getElementById("video");
 const liveCanvas = document.getElementById("liveCanvas");
 const liveCtx = liveCanvas.getContext("2d");
-liveCanvasCanvas.width = window.innerWidth / 2;
+liveCanvas.width = window.innerWidth / 2;
 liveCanvas.height = window.innerHeight;
 
 // HandTrack.js module parameters

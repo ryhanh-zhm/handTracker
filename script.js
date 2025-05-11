@@ -4,15 +4,15 @@ const drawCtx = drawCanvas.getContext("2d");
 drawCanvas.width = window.innerWidth / 2;
 drawCanvas.height = window.innerHeight;
 
-// set up video and canvas for live video feed
+// Set up video and canvas for live video feed
 const video = document.getElementById("video");
 const liveCanvas = document.getElementById("liveCanvas");
 const liveCtx = liveCanvas.getContext("2d");
 liveCanvas.width = window.innerWidth / 2;
 liveCanvas.height = window.innerHeight;
 
-// HandTrack.js module parameters
-const moduleParams = {
+// HandTrack.js model parameters
+const modelParams = {
   flipHorizontal: true,
   maxNumBoxes: 5,
   iouThreshold: 0.5,
@@ -21,32 +21,32 @@ const moduleParams = {
 
 let prevX = null;
 let prevY = null;
-let pointerColor = "red";
+let pointerColor = "red"; // Default pointer color
 
-// Function to draw on canvas whtn a hand is detected
+// Function to draw on the canvas when a hand is detected
 function drawFromHand(x, y, isClosed, isOpen) {
-  if (prevX == null || prevY == null) {
+  if (prevX === null || prevY === null) {
     prevX = x;
     prevY = y;
   }
 
-  // If "open" gesture, clear the drawing(eraser)
+  // If "open" gesture, clear the drawing (eraser)
   if (isOpen) {
     drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
     resetDrawing();
-    return;
+    return; // Stop drawing if open hand is detected
   }
 
   // If "closed" gesture, change the pointer color randomly but don't draw
   if (isClosed) {
-    pointerColor = getRandomColor();
-    return;
+    pointerColor = getRandomColor(); // Change pointer color
+    return; // Do not draw anything when fist is closed
   }
 
-  drawCtx.strokeStyle = pointerColor;
+  drawCtx.strokeStyle = pointerColor; // Use the current pointer color
   drawCtx.lineWidth = 3;
   drawCtx.lineCap = "round";
-  drawCtx.baginPath();
+  drawCtx.beginPath();
   drawCtx.moveTo(prevX, prevY);
   drawCtx.lineTo(x, y);
   drawCtx.stroke();
@@ -54,6 +54,7 @@ function drawFromHand(x, y, isClosed, isOpen) {
   prevX = x;
   prevY = y;
 }
+
 // Helper function to generate a random color
 function getRandomColor() {
   const letters = "0123456789ABCDEF";
@@ -64,7 +65,7 @@ function getRandomColor() {
   return color;
 }
 
-// function to reset the drawing state
+// Function to reset the drawing state
 function resetDrawing() {
   prevX = null;
   prevY = null;
@@ -74,11 +75,11 @@ function resetDrawing() {
 handTrack.startVideo(video).then((status) => {
   if (status) {
     navigator.mediaDevices.getUserMedia({ video: true }).then(() => {
-      handTrack.load(moduleParams).then((model) => {
+      handTrack.load(modelParams).then((model) => {
         setInterval(() => {
           model.detect(video).then((predictions) => {
             liveCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
-            model.randerPredictions(predictions, liveCanvas, liveCtx, video);
+            model.renderPredictions(predictions, liveCanvas, liveCtx, video);
 
             // Find the "open", "closed", and "point" gestures
             const open = predictions.find((p) => p.label === "open");
@@ -86,32 +87,33 @@ handTrack.startVideo(video).then((status) => {
             const point = predictions.find((p) => p.label === "point");
 
             if (open) {
-              drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+              drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height); // Erase drawing
               resetDrawing();
             }
 
             if (closed) {
+              // Change the pointer color when closed hand is detected
               const [x, y, w, h] = closed.bbox;
               const centerX =
                 ((x + w / 2) / video.videoWidth) * drawCanvas.width;
               const centerY =
-                ((y + w / 2) / video.videoHeight) * drawCanvas.height;
+                ((y + h / 2) / video.videoHeight) * drawCanvas.height;
 
-              drawFromHand(centerX, centerY, true, false);
+              drawFromHand(centerX, centerY, true, false); // Pass 'true' for closed and 'false' for open
             } else if (point) {
               const [x, y, w, h] = point.bbox;
               const centerX =
                 ((x + w / 2) / video.videoWidth) * drawCanvas.width;
               const centerY =
-                ((y + w / 2) / video.videoHeight) * drawCanvas.height;
+                ((y + h / 2) / video.videoHeight) * drawCanvas.height;
 
-              drawFromHand(centerX, centerY, false, false);
+              drawFromHand(centerX, centerY, false, false); // Normal drawing behavior
             } else {
               resetDrawing();
             }
           });
-        });
-      }, 100);
+        }, 100);
+      });
     });
   }
 });
